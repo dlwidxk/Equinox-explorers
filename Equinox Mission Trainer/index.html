@@ -32,12 +32,12 @@
     <section class="screen card" id="map-screen" aria-labelledby="map-title" hidden>
       <p class="eyebrow">Training 1 of 2</p>
       <h1 id="map-title">Mission Map</h1>
-      <p class="lead">Open each phase to explore the mission.</p>
-      <ol class="phase-list" id="phase-list" aria-label="Mission phases"></ol>
+      <p class="lead">Explore one fact at a time. Complete each phase in order: Launch, Orbit, Life on board, then Return.</p>
+      <ol class="phase-list phase-track" id="phase-list" aria-label="Mission phases"></ol>
       <article class="phase-detail" id="phase-detail" aria-live="polite">
         <p>Select a mission phase to see its details.</p>
       </article>
-      <p class="progress-text" id="phase-progress">0 of 4 phases opened</p>
+      <p class="progress-text" id="phase-progress" aria-live="polite">0 of 4 phases completed</p>
       <button class="button button-primary" id="to-emergency-button" type="button" disabled>Go to Emergency Training</button>
     </section>
 
@@ -45,6 +45,21 @@
     <section class="screen card" id="emergency-screen" aria-labelledby="emergency-title" hidden>
       <p class="eyebrow">Training 2 of 2</p>
       <h1 id="emergency-title">Emergency Simulator</h1>
+      <p class="lead">Every choice has a cost. Keep all three systems running!</p>
+      <div class="resource-panel meters" aria-label="Mission resources">
+        <div class="resource-meter meter meter--energy" data-resource="energy">
+          <div class="resource-label meter__label"><span aria-hidden="true">⚡</span> Energy <strong id="energy-value">100%</strong></div>
+          <div class="meter-track meter__track" role="progressbar" aria-label="Energy" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><span class="meter__fill" id="energy-bar"></span></div>
+        </div>
+        <div class="resource-meter meter meter--oxygen" data-resource="oxygen">
+          <div class="resource-label meter__label"><span aria-hidden="true">💨</span> Oxygen <strong id="oxygen-value">100%</strong></div>
+          <div class="meter-track meter__track" role="progressbar" aria-label="Oxygen" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><span class="meter__fill" id="oxygen-bar"></span></div>
+        </div>
+        <div class="resource-meter meter meter--shield" data-resource="shield">
+          <div class="resource-label meter__label"><span aria-hidden="true">🛡️</span> Shield <strong id="shield-value">100%</strong></div>
+          <div class="meter-track meter__track" role="progressbar" aria-label="Shield" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><span class="meter__fill" id="shield-bar"></span></div>
+        </div>
+      </div>
       <p class="progress-text" id="scenario-progress"></p>
       <article id="scenario-card" aria-live="polite"></article>
       <div class="feedback" id="choice-feedback" aria-live="polite" hidden></div>
@@ -55,12 +70,13 @@
     <section class="screen card" id="result-screen" aria-labelledby="result-title" hidden>
       <p class="eyebrow">Mission complete</p>
       <h1 id="result-title">Training Results</h1>
-      <p class="score-line">Final score: <strong id="final-score">0</strong> / 30</p>
-      <div class="badge" id="earned-badge" aria-live="polite"></div>
+      <p class="mission-outcome" id="mission-outcome" aria-live="polite"></p>
+      <p class="score-line">Mission points: <strong id="final-score">0</strong> / 30</p>
+      <div class="badge-list badge-row" id="earned-badge" aria-live="polite"></div>
       <section class="diploma" aria-labelledby="diploma-title">
         <h2 id="diploma-title">Mission Training Diploma</h2>
         <p>This diploma is awarded to</p>
-        <p class="diploma-name" id="diploma-name">Junior Astronaut</p>
+        <p class="diploma-name diploma__name" id="diploma-name">Junior Astronaut</p>
         <p>for completing the mission trainer.</p>
       </section>
       <button class="button button-primary" id="play-again-button" type="button">Play Again</button>
