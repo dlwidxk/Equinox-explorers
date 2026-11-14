@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Learn about a space mission and practice astronaut decisions.">
+  <title>Equinox Explorers | Junior Astronaut Mission Trainer</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/data.js" defer></script>
+  <script src="js/app.js" defer></script>
+</head>
+<body>
+  <!-- Encabezado breve para ubicar el reto sin usar marcas ni logotipos. -->
+  <header class="site-header">
+    <p class="eyebrow">NASA Space Apps Challenge</p>
+    <p class="header-challenge">Build a Junior Astronaut Mission Trainer</p>
+  </header>
+
+  <main class="app-shell">
+    <!-- Pantalla inicial: el nombre solo se usa durante esta partida. -->
+    <section class="screen card" id="start-screen" aria-labelledby="start-title">
+      <p class="eyebrow">Mission briefing</p>
+      <h1 id="start-title">Equinox Explorers</h1>
+      <p class="lead">Learn how a space mission works, then practice making safe decisions.</p>
+      <label for="astronaut-name">What should we call you, astronaut?</label>
+      <input id="astronaut-name" name="astronaut-name" type="text" maxlength="30" autocomplete="off" placeholder="Astronaut name (optional)">
+      <button class="button button-primary" id="start-button" type="button">Start Training</button>
+      <p class="privacy-note">Your name stays on this page and is not saved.</p>
+    </section>
+
+    <!-- Mapa de misión: cada fase se marca al abrirla. -->
+    <section class="screen card" id="map-screen" aria-labelledby="map-title" hidden>
+      <p class="eyebrow">Training 1 of 2</p>
+      <h1 id="map-title">Mission Map</h1>
+      <p class="lead">Open each phase to explore the mission.</p>
+      <ol class="phase-list" id="phase-list" aria-label="Mission phases"></ol>
+      <article class="phase-detail" id="phase-detail" aria-live="polite">
+        <p>Select a mission phase to see its details.</p>
+      </article>
+      <p class="progress-text" id="phase-progress">0 of 4 phases opened</p>
+      <button class="button button-primary" id="to-emergency-button" type="button" disabled>Go to Emergency Training</button>
+    </section>
+
+    <!-- Simulador: muestra una situación a la vez y luego da retroalimentación. -->
+    <section class="screen card" id="emergency-screen" aria-labelledby="emergency-title" hidden>
+      <p class="eyebrow">Training 2 of 2</p>
+      <h1 id="emergency-title">Emergency Simulator</h1>
+      <p class="progress-text" id="scenario-progress"></p>
+      <article id="scenario-card" aria-live="polite"></article>
+      <div class="feedback" id="choice-feedback" aria-live="polite" hidden></div>
+      <button class="button button-primary" id="next-scenario-button" type="button" hidden>Next</button>
+    </section>
+
+    <!-- Resultado final con puntaje, medalla y diploma. -->
+    <section class="screen card" id="result-screen" aria-labelledby="result-title" hidden>
+      <p class="eyebrow">Mission complete</p>
+      <h1 id="result-title">Training Results</h1>
+      <p class="score-line">Final score: <strong id="final-score">0</strong> / 30</p>
+      <div class="badge" id="earned-badge" aria-live="polite"></div>
+      <section class="diploma" aria-labelledby="diploma-title">
+        <h2 id="diploma-title">Mission Training Diploma</h2>
+        <p>This diploma is awarded to</p>
+        <p class="diploma-name" id="diploma-name">Junior Astronaut</p>
+        <p>for completing the mission trainer.</p>
+      </section>
+      <button class="button button-primary" id="play-again-button" type="button">Play Again</button>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Training content is currently placeholder text.</p>
+  </footer>
+</body>
+</html>

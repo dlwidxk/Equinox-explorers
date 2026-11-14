@@ -1,0 +1,125 @@
+/* Colores y tipografía base: contraste alto para que el contenido se lea bien. */
+:root {
+  color-scheme: dark;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #07172e;
+  color: #f5f7fb;
+  --navy: #07172e;
+  --panel: #102746;
+  --orange: #ff9f43;
+  --light: #f5f7fb;
+  --muted: #c5d1e0;
+}
+
+* { box-sizing: border-box; }
+
+/* El cuerpo ocupa toda la pantalla y deja el contenido centrado. */
+body {
+  min-height: 100vh;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at top, #15345a 0, var(--navy) 48rem);
+  line-height: 1.6;
+}
+
+.site-header, .site-footer {
+  width: min(100% - 2rem, 58rem);
+  margin: 0 auto;
+  text-align: center;
+}
+
+.site-header { padding: 1.25rem 0 0.5rem; }
+.site-footer { padding: 1rem 0 1.5rem; color: var(--muted); font-size: 0.9rem; }
+.site-header p, .site-footer p { margin: 0.2rem; }
+.eyebrow { color: var(--orange); font-size: 0.9rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.header-challenge { color: var(--muted); }
+
+.app-shell {
+  width: min(100% - 2rem, 52rem);
+  margin: auto;
+  padding: 1rem 0 2rem;
+}
+
+/* Tarjeta común para mantener el mismo estilo en las cuatro pantallas. */
+.card {
+  padding: clamp(1.25rem, 5vw, 3rem);
+  border: 1px solid #315071;
+  border-radius: 1.25rem;
+  background: rgba(16, 39, 70, 0.96);
+  box-shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.25);
+}
+
+h1 { margin: 0.25rem 0 0.75rem; font-size: clamp(2rem, 7vw, 3.25rem); line-height: 1.1; }
+h2 { margin-top: 0; }
+.lead { max-width: 38rem; color: var(--muted); font-size: 1.15rem; }
+label { display: block; margin: 1.5rem 0 0.5rem; font-weight: 700; }
+
+input {
+  width: 100%;
+  min-height: 3.25rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid #91a8c2;
+  border-radius: 0.65rem;
+  background: #07172e;
+  color: var(--light);
+  font: inherit;
+}
+
+input:focus-visible, button:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+/* Botones grandes para que sean cómodos de usar con ratón o pantalla táctil. */
+.button {
+  min-height: 3.5rem;
+  padding: 0.8rem 1.25rem;
+  border: 0;
+  border-radius: 0.7rem;
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.button-primary { margin-top: 1.25rem; background: var(--orange); color: #1c160f; }
+.button-primary:hover:not(:disabled) { background: #ffb96f; }
+.button:disabled { cursor: not-allowed; opacity: 0.5; }
+.privacy-note, .progress-text { color: var(--muted); }
+
+/* Fases y respuestas usan controles con el mismo contraste y área de clic. */
+.phase-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.65rem; padding: 0; list-style: none; }
+.phase-button, .option-button {
+  width: 100%;
+  min-height: 3.5rem;
+  padding: 0.7rem;
+  border: 2px solid #7690ad;
+  border-radius: 0.7rem;
+  background: #0a1d36;
+  color: var(--light);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.phase-button[aria-pressed="true"], .phase-button.is-opened { border-color: var(--orange); color: var(--orange); }
+.phase-detail { min-height: 13rem; margin: 1rem 0; padding: 1.25rem; border-radius: 0.8rem; background: #0a1d36; }
+.phase-image { display: grid; min-height: 7rem; margin-bottom: 1rem; place-items: center; border: 1px dashed #91a8c2; border-radius: 0.6rem; color: var(--muted); }
+.phase-facts { padding-left: 1.25rem; }
+
+.scenario-options { display: grid; gap: 0.75rem; margin-top: 1.25rem; }
+.option-button { text-align: left; }
+.option-button:hover:not(:disabled) { border-color: var(--orange); }
+.feedback { margin-top: 1.25rem; padding: 1rem; border-left: 0.35rem solid var(--orange); border-radius: 0.4rem; background: #0a1d36; }
+.score-line { font-size: 1.25rem; }
+.badge { display: inline-block; padding: 0.5rem 1rem; border: 2px solid var(--orange); border-radius: 99rem; color: var(--orange); font-weight: 700; }
+.diploma { margin-top: 1.5rem; padding: 1.5rem; border: 2px solid var(--orange); border-radius: 0.9rem; text-align: center; }
+.diploma-name { color: var(--orange); font-size: 1.5rem; font-weight: 700; overflow-wrap: anywhere; }
+[hidden] { display: none !important; }
+
+/* En pantallas angostas, las fases se acomodan en dos columnas. */
+@media (max-width: 38rem) {
+  .phase-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .app-shell { width: min(100% - 1rem, 52rem); }
+  .card { padding: 1.25rem; }
+}
