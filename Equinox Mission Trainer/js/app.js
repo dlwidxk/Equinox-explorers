@@ -14,6 +14,41 @@ let openedPhases = new Set();
 let scenarioList = Object.values(scenarios);
 let scenarioIndex = 0;
 let score = 0;
+let resources = { energy: 100, oxygen: 100, shield: 100 };
+let missionFailed = false;
+let activePhase = null;
+let factIndex = 0;
+
+// Crea un beep corto con el navegador, sin cargar archivos de sonido.
+function playFeedbackSound(isGood) {
+  try {
+    const audio = new AudioContext();
+    const oscillator = audio.createOscillator();
+    const volume = audio.createGain();
+    oscillator.connect(volume);
+    volume.connect(audio.destination);
+    oscillator.frequency.value = isGood ? 660 : 220;
+    volume.gain.setValueAtTime(0.08, audio.currentTime);
+    volume.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.18);
+    oscillator.start();
+    oscillator.stop(audio.currentTime + 0.18);
+    oscillator.onended = () => audio.close();
+  } catch (error) {
+    // Si el navegador no permite sonido, el feedback visual sigue funcionando.
+  }
+}
+
+function updateResourceBars() {
+  Object.entries(resources).forEach(([resource, value]) => {
+    const bar = document.querySelector(`#${resource}-bar`);
+    const label = document.querySelector(`#${resource}-value`);
+    const track = bar.closest('.meter-track');
+    bar.style.width = `${value}%`;
+    label.textContent = `${value}%`;
+    track.setAttribute('aria-valuenow', String(value));
+    track.classList.toggle('is-low', value <= 25);
+  });
+}
 
 // Deja visible una sola pantalla a la vez.
 function showScreen(screenId) {
@@ -25,49 +60,183 @@ function showScreen(screenId) {
 
 function renderPhases() {
   phaseList.replaceChildren();
+  phaseList.style.setProperty('--rocket-position', '0%');
+  const rocketWrap = document.createElement('li');
+  rocketWrap.className = 'phase-track__rocket-wrap';
+  rocketWrap.setAttribute('aria-hidden', 'true');
+  const rocket = document.createElement('span');
+  rocket.className = 'phase-track__rocket';
+  rocket.textContent = '🚀';
+  rocketWrap.append(rocket);
+  phaseList.append(rocketWrap);
 
   phases.forEach((phase) => {
     const item = document.createElement('li');
     const button = document.createElement('button');
-    button.className = 'phase-button';
+    button.className = 'phase-button phase-track__stop';
     button.type = 'button';
-    button.textContent = phase.title;
-    button.setAttribute('aria-pressed', 'false');
+    button.setAttribute('aria-selected', 'false');
+    button.dataset.phaseId = phase.id;
+    const icon = document.createElement('span');
+    icon.className = 'phase-track__dot';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = ({ launch: '🚀', orbit: '🪐', 'life-on-board': '🏠', return: '🌎' })[phase.id] || '⭐';
+    const label = document.createElement('span');
+    label.textContent = phase.title;
+    button.append(icon, label);
     button.addEventListener('click', () => openPhase(phase, button));
     item.append(button);
     phaseList.append(item);
   });
+  updatePhaseLocks();
+}
+
+// Solo habilita la siguiente fase pendiente; las anteriores se pueden repasar.
+function updatePhaseLocks() {
+  phaseList.querySelectorAll('.phase-track__stop').forEach((button, index) => {
+    const isLocked = index > openedPhases.size;
+    button.disabled = isLocked;
+    if (isLocked) {
+      button.title = 'Complete the earlier phase first';
+    } else {
+      button.removeAttribute('title');
+    }
+  });
 }
 
 function openPhase(phase, selectedButton) {
-  openedPhases.add(phase.id);
-  phaseList.querySelectorAll('button').forEach((button) => {
-    button.setAttribute('aria-pressed', String(button === selectedButton));
-    if (button === selectedButton) button.classList.add('is-opened');
+  const phaseIndex = phases.findIndex((item) => item.id === phase.id);
+  if (phaseIndex > openedPhases.size) return;
+  activePhase = phase;
+  factIndex = 0;
+  phaseList.querySelectorAll('.phase-track__stop').forEach((button) => {
+    button.setAttribute('aria-selected', String(button === selectedButton));
   });
+  renderPhaseFact();
+}
 
-  // Por ahora mostramos un recuadro; luego el equipo podrá agregar una imagen aprobada.
+// Muestra solo el dato actual, con su enlace y controles de avance.
+function renderPhaseFact() {
+  if (!activePhase) return;
+
+  const fact = activePhase.facts[factIndex];
   phaseDetail.replaceChildren();
-  const imagePlaceholder = document.createElement('div');
-  imagePlaceholder.className = 'phase-image';
-  imagePlaceholder.setAttribute('role', 'img');
-  imagePlaceholder.setAttribute('aria-label', `Placeholder image for ${phase.title}`);
-  imagePlaceholder.textContent = '[Phase image placeholder]';
-
+  phaseDetail.dataset.phase = activePhase.id;
   const heading = document.createElement('h2');
-  heading.textContent = phase.title;
-  const facts = document.createElement('ul');
-  facts.className = 'phase-facts';
-  phase.facts.forEach((fact) => {
-    const factItem = document.createElement('li');
-    factItem.textContent = fact;
-    facts.append(factItem);
-  });
-  const source = document.createElement('p');
-  source.textContent = `Source: ${phase.source}`;
-  phaseDetail.append(imagePlaceholder, heading, facts, source);
+  heading.textContent = activePhase.title;
+  phaseDetail.append(heading);
 
-  phaseProgress.textContent = `${openedPhases.size} of ${phases.length} phases opened`;
+  if (activePhase.tagline) {
+    const tagline = document.createElement('p');
+    tagline.className = 'phase-tagline';
+    tagline.textContent = activePhase.tagline;
+    phaseDetail.append(tagline);
+  }
+  if (factIndex === 0 && activePhase.intro) {
+    const intro = document.createElement('p');
+    intro.className = 'phase-intro';
+    intro.textContent = activePhase.intro;
+    phaseDetail.append(intro);
+  }
+
+  const dots = document.createElement('ol');
+  dots.className = 'fact-dots';
+  dots.setAttribute('aria-label', `Fact ${factIndex + 1} of ${activePhase.facts.length}`);
+  activePhase.facts.forEach((item, index) => {
+    const dot = document.createElement('li');
+    if (index === factIndex) {
+      dot.className = 'is-current';
+      dot.setAttribute('aria-current', 'step');
+    }
+    dot.setAttribute('aria-hidden', 'true');
+    dots.append(dot);
+  });
+  phaseDetail.append(dots);
+
+  const factCard = document.createElement('div');
+  const animationName = ({
+    launch: 'launch',
+    orbit: 'orbit',
+    'life-on-board': 'life',
+    return: 'return'
+  })[activePhase.id] || 'orbit';
+  factCard.className = `fact-step fact-step--${animationName}`;
+  factCard.setAttribute('aria-live', 'polite');
+  const factText = document.createElement('p');
+  factText.textContent = typeof fact === 'string' ? fact : fact.text;
+  const animation = document.createElement('span');
+  animation.className = 'fact-animation';
+  animation.setAttribute('aria-hidden', 'true');
+  animation.textContent = ({ launch: '🚀', orbit: '🪐', life: '🍎', return: '🪂' })[animationName];
+  factCard.append(factText, animation);
+  phaseDetail.append(factCard);
+
+  const sourceName = typeof fact === 'string' ? activePhase.source : fact.source;
+  const sourceUrl = typeof fact === 'string' ? '' : fact.url;
+  if (sourceName) {
+    const source = document.createElement('details');
+    source.className = 'source-toggle';
+    const summary = document.createElement('summary');
+    summary.textContent = 'Source';
+    const sourceText = document.createElement('p');
+    if (sourceUrl) {
+      const link = document.createElement('a');
+      link.href = sourceUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = sourceName;
+      sourceText.append(link);
+    } else {
+      sourceText.textContent = sourceName;
+    }
+    source.append(summary, sourceText);
+    phaseDetail.append(source);
+  }
+
+  const navigation = document.createElement('div');
+  navigation.className = 'phase-navigation';
+  const backButton = document.createElement('button');
+  backButton.className = 'button phase-nav-button button-secondary';
+  backButton.type = 'button';
+  backButton.textContent = 'Back';
+  backButton.disabled = factIndex === 0;
+  backButton.addEventListener('click', () => {
+    if (factIndex > 0) {
+      factIndex -= 1;
+      renderPhaseFact();
+    }
+  });
+
+  const nextButton = document.createElement('button');
+  nextButton.className = 'button button-primary phase-nav-button';
+  nextButton.type = 'button';
+  const isLastFact = factIndex === activePhase.facts.length - 1;
+  nextButton.textContent = isLastFact ? 'Finish phase' : 'Next';
+  nextButton.addEventListener('click', () => {
+    if (isLastFact) {
+      finishPhase();
+    } else {
+      factIndex += 1;
+      renderPhaseFact();
+    }
+  });
+  navigation.append(backButton, nextButton);
+  phaseDetail.append(navigation);
+}
+
+function finishPhase() {
+  if (!activePhase) return;
+  openedPhases.add(activePhase.id);
+  const phaseButton = phaseList.querySelector(`[data-phase-id="${activePhase.id}"]`);
+  phaseButton?.classList.add('is-visited');
+  updatePhaseLocks();
+  const trackProgress = openedPhases.size / phases.length;
+  phaseList.style.setProperty('--rocket-position', `${75 * trackProgress}%`);
+  const completion = document.createElement('p');
+  completion.className = 'phase-complete';
+  completion.textContent = `${activePhase.title} complete! Choose another phase.`;
+  phaseDetail.replaceChildren(completion);
+  phaseProgress.textContent = `${openedPhases.size} of ${phases.length} phases completed`;
   emergencyButton.disabled = openedPhases.size !== phases.length;
 }
 
@@ -88,35 +257,81 @@ function renderScenario() {
     button.className = 'option-button';
     button.type = 'button';
     button.textContent = option.text;
-    button.addEventListener('click', () => chooseOption(option, options));
+    button.addEventListener('click', () => chooseOption(option, options, button));
     options.append(button);
   });
 
   scenarioCard.append(heading, prompt, options);
   feedback.hidden = true;
   nextButton.hidden = true;
+  nextButton.textContent = 'Next';
 }
 
-function chooseOption(option, options) {
+function chooseOption(option, options, selectedButton) {
   score += option.points;
-  options.querySelectorAll('button').forEach((button) => { button.disabled = true; });
-  feedback.textContent = `${option.explanation} (+${option.points} points)`;
+  Object.entries(option.costs).forEach(([resource, cost]) => {
+    resources[resource] = Math.max(0, resources[resource] - cost);
+  });
+  options.querySelectorAll('button').forEach((button) => {
+    button.disabled = true;
+    button.classList.add(button === selectedButton ? (option.good ? 'choice-good' : 'choice-risky') : 'choice-muted');
+  });
+  updateResourceBars();
+  missionFailed = Object.values(resources).some((value) => value === 0);
+  feedback.textContent = `${option.explanation} You used ${Object.entries(option.costs).filter(([, cost]) => cost > 0).map(([resource, cost]) => `${cost}% ${resource}`).join(', ') || 'no supplies'}.`;
+  feedback.classList.toggle('feedback-good', option.good);
+  feedback.classList.toggle('feedback-risky', !option.good);
+  playFeedbackSound(option.good);
   feedback.hidden = false;
   nextButton.hidden = false;
+  nextButton.textContent = missionFailed ? 'See Mission Result' : 'Next';
+  selectedButton.classList.add('choice-pop');
 }
 
 function showResult() {
-  const earnedBadge = [...badges].reverse().find((badge) => score >= badge.minScore) || badges[0];
+  const earnedBadges = badges.filter((badge) => {
+    if (badge.resource) return resources[badge.resource] >= badge.minimum;
+    return score >= badge.minScore;
+  });
   document.querySelector('#final-score').textContent = String(score);
-  document.querySelector('#earned-badge').textContent = `${earnedBadge.name} Badge`;
+  const outcome = document.querySelector('#mission-outcome');
+  outcome.textContent = missionFailed
+    ? 'Mission paused! One resource ran out. Review your choices and try again.'
+    : 'Mission complete! Your crew kept every system running.';
+  outcome.classList.toggle('outcome-failed', missionFailed);
+  const badgeList = document.querySelector('#earned-badge');
+  badgeList.replaceChildren();
+  if (!earnedBadges.length) {
+    const message = document.createElement('p');
+    message.textContent = 'No medals this time. Play again and try a new strategy!';
+    badgeList.append(message);
+  }
+  earnedBadges.forEach((badge) => {
+    const medal = document.createElement('p');
+    medal.className = 'badge';
+    medal.textContent = `${badge.icon} ${badge.name}`;
+    badgeList.append(medal);
+  });
   document.querySelector('#diploma-name').textContent = astronautName || 'Junior Astronaut';
   showScreen('result-screen');
+}
+
+function startMission() {
+  scenarioIndex = 0;
+  score = 0;
+  resources = { energy: 100, oxygen: 100, shield: 100 };
+  missionFailed = false;
+  scenarioList = Object.values(scenarios);
+  updateResourceBars();
+  renderScenario();
+  showScreen('emergency-screen');
 }
 
 document.querySelector('#start-button').addEventListener('click', () => {
   astronautName = document.querySelector('#astronaut-name').value.trim();
   openedPhases = new Set();
   score = 0;
+  resources = { energy: 100, oxygen: 100, shield: 100 };
   renderPhases();
   phaseProgress.textContent = `0 of ${phases.length} phases opened`;
   emergencyButton.disabled = true;
@@ -125,13 +340,14 @@ document.querySelector('#start-button').addEventListener('click', () => {
 
 emergencyButton.addEventListener('click', () => {
   if (openedPhases.size !== phases.length) return;
-  scenarioIndex = 0;
-  scenarioList = Object.values(scenarios);
-  renderScenario();
-  showScreen('emergency-screen');
+  startMission();
 });
 
 nextButton.addEventListener('click', () => {
+  if (missionFailed) {
+    showResult();
+    return;
+  }
   scenarioIndex += 1;
   if (scenarioIndex < scenarioList.length) {
     renderScenario();
@@ -141,9 +357,8 @@ nextButton.addEventListener('click', () => {
 });
 
 document.querySelector('#play-again-button').addEventListener('click', () => {
-  document.querySelector('#astronaut-name').value = '';
-  astronautName = '';
-  showScreen('start-screen');
+  openedPhases = new Set(phases.map((phase) => phase.id));
+  startMission();
 });
 
 showScreen('start-screen');
