@@ -6,32 +6,73 @@
   <meta name="description" content="Learn about a space mission and practice astronaut decisions.">
   <title>Equinox Explorers | Junior Astronaut Mission Trainer</title>
   <link rel="stylesheet" href="css/style.css">
+  <script src="js/vendor/react.production.min.js" defer></script>
+  <script src="js/vendor/react-dom.production.min.js" defer></script>
   <script src="js/data.js" defer></script>
+  <script src="js/nasa-api.js" defer></script>
+  <script src="js/react-visuals.js" defer></script>
   <script src="js/app.js" defer></script>
 </head>
 <body>
-  <!-- Encabezado breve para ubicar el reto sin usar marcas ni logotipos. -->
+  <div id="react-visual-root" aria-hidden="true"></div>
+  <!-- Brief challenge heading without logos or insignia. -->
   <header class="site-header">
-    <p class="eyebrow">NASA Space Apps Challenge</p>
+    <div class="header-bar">
+      <p class="eyebrow">NASA Space Apps Challenge</p>
+      <button class="button music-toggle" id="music-toggle" type="button" aria-pressed="true">Music: On</button>
+    </div>
     <p class="header-challenge">Build a Junior Astronaut Mission Trainer</p>
   </header>
 
   <main class="app-shell">
-    <!-- Pantalla inicial: el nombre solo se usa durante esta partida. -->
+    <!-- The astronaut name is used only during the current session. -->
     <section class="screen card" id="start-screen" aria-labelledby="start-title">
-      <p class="eyebrow">Mission briefing</p>
-      <h1 id="start-title">Equinox Explorers</h1>
-      <p class="lead">Learn how a space mission works, then practice making safe decisions.</p>
+      <div class="start-hero">
+        <div class="hero-illustration">
+          <svg viewBox="0 0 420 300" role="img" aria-labelledby="hero-art-title">
+            <title id="hero-art-title">A rocket flying past an orbital station</title>
+            <ellipse class="hero-orbit" cx="210" cy="185" rx="185" ry="80" transform="rotate(-18 210 185)" />
+            <circle class="hero-planet" cx="317" cy="213" r="52" />
+            <path class="hero-planet-line" d="M271 213h92M286 183c21 12 39 12 61 0M286 243c21-12 39-12 61 0" />
+            <g class="hero-station" transform="translate(65 77)">
+              <rect x="0" y="18" width="76" height="20" rx="4" />
+              <path d="M-26 3h24v50h-24zM78 3h24v50H78z" />
+              <path d="M-22 8h16v40h-16zM82 8h16v40H82z" />
+              <rect x="27" y="8" width="22" height="40" rx="6" />
+              <circle cx="38" cy="28" r="6" />
+            </g>
+            <g class="hero-rocket" transform="translate(188 32) rotate(20)">
+              <path d="M24 0C10 18 6 41 8 72h32C42 41 38 18 24 0Z" />
+              <circle cx="24" cy="34" r="8" />
+              <path d="M9 56 0 72h12M39 56l9 16H36" />
+              <path class="hero-flame" d="M16 72h16l-8 30z" />
+            </g>
+            <path class="hero-star" d="m91 182 4 10 10 4-10 4-4 10-4-10-10-4 10-4z" />
+            <path class="hero-star" d="m236 139 3 7 7 3-7 3-3 7-3-7-7-3 7-3z" />
+            <circle class="hero-star-dot" cx="151" cy="239" r="3" />
+            <circle class="hero-star-dot" cx="370" cy="112" r="3" />
+          </svg>
+        </div>
+        <div class="hero-copy">
+          <p class="eyebrow">Mission briefing</p>
+          <h1 id="start-title" tabindex="-1">Equinox Explorers</h1>
+          <p class="lead">Learn how a space mission works, then practice making safe decisions.</p>
+        </div>
+      </div>
       <label for="astronaut-name">What should we call you, astronaut?</label>
       <input id="astronaut-name" name="astronaut-name" type="text" maxlength="30" autocomplete="off" placeholder="Astronaut name (optional)">
       <button class="button button-primary" id="start-button" type="button">Start Training</button>
       <p class="privacy-note">Your name stays on this page and is not saved.</p>
     </section>
 
-    <!-- Mapa de misión: cada fase se marca al abrirla. -->
+    <!-- Mission map with one fact at a time. -->
     <section class="screen card" id="map-screen" aria-labelledby="map-title" hidden>
-      <p class="eyebrow">Training 1 of 2</p>
-      <h1 id="map-title">Mission Map</h1>
+      <p class="eyebrow">Mission 1 of 2 · Crew briefing</p>
+      <h1 id="map-title" tabindex="-1">Mission Map</h1>
+      <div class="hud" aria-label="Player progress">
+        <span class="hud__avatar" aria-hidden="true">🧑‍🚀</span>
+        <span class="hud__who"><span class="hud__name">Junior Astronaut</span><span class="hud__rank">Rookie</span></span>
+      </div>
       <p class="lead">Explore one fact at a time. Complete each phase in order: Launch, Orbit, Life on board, then Return.</p>
       <ol class="phase-list phase-track" id="phase-list" aria-label="Mission phases"></ol>
       <article class="phase-detail" id="phase-detail" aria-live="polite">
@@ -41,11 +82,26 @@
       <button class="button button-primary" id="to-emergency-button" type="button" disabled>Go to Emergency Training</button>
     </section>
 
-    <!-- Simulador: muestra una situación a la vez y luego da retroalimentación. -->
+    <!-- Emergency simulator with immediate feedback. -->
     <section class="screen card" id="emergency-screen" aria-labelledby="emergency-title" hidden>
-      <p class="eyebrow">Training 2 of 2</p>
-      <h1 id="emergency-title">Emergency Simulator</h1>
-      <p class="lead">Every choice has a cost. Keep all three systems running!</p>
+      <p class="eyebrow">Mission 2 of 2 · Emergency mission</p>
+      <h1 id="emergency-title" tabindex="-1">Emergency Simulator</h1>
+      <aside class="mission-briefing" aria-labelledby="mission-rules-title">
+        <p class="mission-briefing__eyebrow">Before launch</p>
+        <h2 id="mission-rules-title">Mission rules</h2>
+        <p class="mission-briefing__intro">Read these quick rules before choosing your first move.</p>
+        <ul>
+          <li>Answer two questions: Solar Storm and one random emergency.</li>
+          <li>Each answer earns points and uses mission resources.</li>
+          <li>If a resource reaches zero, lose 5 points once for that resource.</li>
+          <li>A hint costs 1 point and can be used once per emergency.</li>
+        </ul>
+      </aside>
+      <div class="hud" aria-label="Player progress">
+        <span class="hud__avatar" aria-hidden="true">🧑‍🚀</span>
+        <span class="hud__who"><span class="hud__name">Junior Astronaut</span><span class="hud__rank">Rookie</span></span>
+      </div>
+      <p class="lead">Mission in progress! Protect Energy, Oxygen, and Shield.</p>
       <div class="resource-panel meters" aria-label="Mission resources">
         <div class="resource-meter meter meter--energy" data-resource="energy">
           <div class="resource-label meter__label"><span aria-hidden="true">⚡</span> Energy <strong id="energy-value">100%</strong></div>
@@ -61,30 +117,49 @@
         </div>
       </div>
       <p class="progress-text" id="scenario-progress"></p>
+      <button class="button sound-toggle" id="sound-toggle" type="button" aria-pressed="true">Sound: On</button>
       <article id="scenario-card" aria-live="polite"></article>
       <div class="feedback" id="choice-feedback" aria-live="polite" hidden></div>
       <button class="button button-primary" id="next-scenario-button" type="button" hidden>Next</button>
     </section>
 
-    <!-- Resultado final con puntaje, medalla y diploma. -->
+    <!-- Final score, rank, badges, and diploma. -->
     <section class="screen card" id="result-screen" aria-labelledby="result-title" hidden>
       <p class="eyebrow">Mission complete</p>
-      <h1 id="result-title">Training Results</h1>
+      <h1 id="result-title" tabindex="-1">Training Results</h1>
       <p class="mission-outcome" id="mission-outcome" aria-live="polite"></p>
-      <p class="score-line">Mission points: <strong id="final-score">0</strong> / 30</p>
+      <p class="score-line">Mission points: <strong id="final-score">0</strong> / <span id="score-total">0</span></p>
+      <p class="rank-summary" id="final-rank" aria-live="polite">Rank: Rookie</p>
       <div class="badge-list badge-row" id="earned-badge" aria-live="polite"></div>
-      <section class="diploma" aria-labelledby="diploma-title">
-        <h2 id="diploma-title">Mission Training Diploma</h2>
-        <p>This diploma is awarded to</p>
-        <p class="diploma-name diploma__name" id="diploma-name">Junior Astronaut</p>
-        <p>for completing the mission trainer.</p>
+      <section class="learned-section" aria-labelledby="learned-title">
+        <h2 id="learned-title">What you learned</h2>
+        <p>Keep exploring</p>
+        <ol id="learned-facts" class="learned-facts"></ol>
       </section>
+      <section class="diploma" aria-labelledby="diploma-title">
+        <span class="diploma__seal" aria-hidden="true">⭐</span>
+        <h2 class="diploma__title" id="diploma-title" tabindex="-1">Mission Training Diploma</h2>
+        <p>This diploma is awarded to</p>
+        <p class="diploma__name" id="diploma-name">Junior Astronaut</p>
+        <p>for completing the mission trainer.</p>
+        <p class="diploma__ribbon" id="diploma-rank">Rookie</p>
+        <p class="diploma__stars" aria-label="Three stars">★ ★ ★</p>
+        <p class="diploma__date" id="diploma-date"></p>
+      </section>
+      <button class="button" id="print-diploma-button" type="button">Print Diploma</button>
       <button class="button button-primary" id="play-again-button" type="button">Play Again</button>
     </section>
   </main>
 
+  <dialog class="mission-dialog" id="mission-dialog" aria-labelledby="mission-dialog-title" aria-describedby="mission-dialog-message">
+    <span class="mission-dialog__icon" aria-hidden="true">🚀</span>
+    <h2 id="mission-dialog-title">Mission update</h2>
+    <p id="mission-dialog-message"></p>
+    <button class="button button-primary" id="mission-dialog-action" type="button">Continue</button>
+  </dialog>
+
   <footer class="site-footer">
-    <p>Training content is currently placeholder text.</p>
+    <p>Independent student project for the NASA Space Apps Challenge. Not an official NASA product. NASA does not endorse it.</p>
   </footer>
 </body>
 </html>
